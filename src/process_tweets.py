@@ -8,6 +8,9 @@ c.execute("SELECT * FROM tweets")
  
 rows = c.fetchall()
 
-df = pd.DataFrame(columns=['date', 'symbol', 'price', 'volume', 'market_cap'], data=rows)
+tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
 
-print(df.head())
+tweets['date'] = pd.DatetimeIndex(tweets['date'])
+
+print(tweets.date.truncate(before='2018-02-26 15:05'))
+print(tweets.date.truncate(after='2018-02-26 15:05'))

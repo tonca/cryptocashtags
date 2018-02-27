@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS 'tweets';
 CREATE TABLE 'tweets' (
     id BIGINT,
     date DATETIME,
-    json VARCHAR(10000),
+    json JSON1,
+    filter VARCHAR(10),
     PRIMARY KEY('id')
 );
