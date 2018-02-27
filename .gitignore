@@ -1,0 +1,5 @@
+authentication
+__pycache__
+biblio
+*.db
+*.json
