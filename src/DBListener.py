@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import string
+from datetime import datetime
 from tweepy.streaming import StreamListener
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -26,7 +27,7 @@ class DBListener(StreamListener):
         json_clean = ''.join(filter(lambda x: x in self.printable, json_str))
 
         id = info['id']
-        date = info['created_at']
+        date = datetime.strptime(info['created_at'],'%a %b %d %H:%M:%S %z %Y')
         print("Fetching tweet {}".format(id))
         print('Created at {}'.format(date))
         print('JSON length: {}'.format(len(json_clean)))
@@ -36,7 +37,7 @@ class DBListener(StreamListener):
         # SQL QUERY
         query = "INSERT OR IGNORE INTO tweets VALUES ('{id}', '{date}', '{json}', '{filter}')".format(
             id = id,
-            date = date,
+            date = date.strftime('%Y-%m-%d %H:%M:%S'),
             json = json_clean,
             filter = self.filter
         )
