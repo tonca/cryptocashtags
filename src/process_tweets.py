@@ -86,21 +86,21 @@ if __name__ == '__main__':
 
     # This lets us process tweet grouped in time slots
     t_slots = tweets.groupby(pd.Grouper(freq=time_resolution, key='date'))
-    features = pd.DataFrame()
+    varT = pd.DataFrame()
 
-    # Computing features
-    features['f1'] = t_slots.size()
-    features['f2'] = t_slots.apply(lambda x : feat2(x))
-    features['f3'] = t_slots.apply(lambda x : feat3(x))
-    features['f4'] = t_slots.apply(lambda x : feat4(x)) # needs to be verified
-    features['f5'] = t_slots.apply(lambda x : feat5(x))
-    features['f6'] = t_slots.apply(lambda x : feat6(x))
-    features['f7'] = t_slots.apply(lambda x : feat7(x))
-    features['f8'] = t_slots.apply(lambda x : feat8(x))
-    features['f9'] = t_slots.apply(lambda x : feat9(x))
-    features['f10'] = t_slots.apply(lambda x : feat10(x))
-    features['f11'] = t_slots.apply(lambda x : feat11(x))
-    features['f12'] = t_slots.apply(lambda x : feat12(x))
-    features['f13'] = t_slots.apply(lambda x : feat13(x))
+    # Computing varT
+    varT['f1'] = t_slots.size()
+    varT['f2'] = t_slots.apply(lambda x : feat2(x))
+    varT['f3'] = t_slots.apply(lambda x : feat3(x))
+    varT['f4'] = t_slots.apply(lambda x : feat4(x)) # needs to be verified
+    varT['f5'] = t_slots.apply(lambda x : feat5(x))
+    varT['f6'] = t_slots.apply(lambda x : feat6(x))
+    varT['f7'] = t_slots.apply(lambda x : feat7(x))
+    varT['f8'] = t_slots.apply(lambda x : feat8(x))
+    varT['f9'] = t_slots.apply(lambda x : feat9(x))
+    varT['f10'] = t_slots.apply(lambda x : feat10(x))
+    varT['f11'] = t_slots.apply(lambda x : feat11(x))
+    varT['f12'] = t_slots.apply(lambda x : feat12(x))
+    varT['f13'] = t_slots.apply(lambda x : feat13(x))
 
-    print(features.tail())
+    print(varT.tail())
