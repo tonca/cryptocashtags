@@ -13,7 +13,7 @@ def n_frnds(data):
     return json.loads(data)['user']['friends_count']
 
 def is_retweeted(data):
-    return json.loads(data)['retweeted']
+    return 'retweeted_status' in json.loads(data)
 
 def has_link(data):
     return len(json.loads(data)['entities']['urls'])>0
@@ -67,10 +67,10 @@ if __name__ == '__main__':
 
     rows = c.fetchall()
 
-    afinn = Afinn()
-
     tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
     tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
+
+    afinn = Afinn()
 
     # This lets us process tweet grouped in time slots
     t_slots = tweets.groupby(pd.Grouper(freq=time_resolution, key='date'))
