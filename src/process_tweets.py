@@ -28,8 +28,9 @@ def has_link(data):
 def has_mntns(data):
     return len(json.loads(data)['entities']['user_mentions'])>0
 
-def sent_score(data):
+def sentiment_score(data):
     return afinn.score(json.loads(data)['text'])
+
 # Volume of tweets authored by who has more than 1000 and
 # less than 5000 followers
 def feat2(group):
@@ -55,24 +56,26 @@ def feat8(group):
     return group.json.apply(lambda json : has_link(json)).sum()
 # Volume of positive tweets
 def feat9(group):
-    return group.json.apply(lambda json : sent_score(json)>0).sum()
+    return group.json.apply(lambda json : sentiment_score(json)>0).sum()
 # Volume of negative tweets
 def feat10(group):
-    return group.json.apply(lambda json : sent_score(json)<0).sum()
+    return group.json.apply(lambda json : sentiment_score(json)<0).sum()
 # Volume of neutral tweets
 def feat11(group):
-    return group.json.apply(lambda json : sent_score(json)==0).sum()
+    return group.json.apply(lambda json : sentiment_score(json)==0).sum()
 # Volume of positive tweet containing mentions (@)
 def feat12(group):
-    return group.json.apply(lambda json : sent_score(json)>0 and has_mntns(json)).sum()
+    return group.json.apply(lambda json : sentiment_score(json)>0 and has_mntns(json)).sum()
 # Volume of negative tweets containing mentions (@)
 def feat13(group):
-    return group.json.apply(lambda json : sent_score(json)==0 and has_mntns(json)).sum()
+    return group.json.apply(lambda json : sentiment_score(json)==0 and has_mntns(json)).sum()
 
 if __name__ == '__main__':
 
+    # Get the time resolution
     time_resolution = sys.argv[1]
 
+    # Fetch data from db
     db = sqlite3.connect('tweets.db')
     c = db.cursor()
     c.execute("SELECT * FROM tweets")
@@ -82,6 +85,7 @@ if __name__ == '__main__':
     tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
     tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
 
+    # Load the afinn class for sentiment analysis
     afinn = Afinn()
 
     # This lets us process tweet grouped in time slots
@@ -92,7 +96,7 @@ if __name__ == '__main__':
     varT['f1'] = t_slots.size()
     varT['f2'] = t_slots.apply(lambda x : feat2(x))
     varT['f3'] = t_slots.apply(lambda x : feat3(x))
-    varT['f4'] = t_slots.apply(lambda x : feat4(x)) # needs to be verified
+    varT['f4'] = t_slots.apply(lambda x : feat4(x))
     varT['f5'] = t_slots.apply(lambda x : feat5(x))
     varT['f6'] = t_slots.apply(lambda x : feat6(x))
     varT['f7'] = t_slots.apply(lambda x : feat7(x))
