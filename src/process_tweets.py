@@ -28,8 +28,15 @@ def has_link(data):
 def has_mntns(data):
     return len(json.loads(data)['entities']['user_mentions'])>0
 
+def tweet_text(data):
+    if is_retweeted(data):
+        text = json.loads(data)['retweeted_status']['text']
+    else:
+        text = json.loads(data)['text']
+    return text
+
 def sentiment_score(data):
-    return afinn.score(json.loads(data)['text'])
+    return afinn.score(tweet_text(data))
 
 # Volume of tweets authored by who has more than 1000 and
 # less than 5000 followers
@@ -108,3 +115,5 @@ if __name__ == '__main__':
     varT['f13'] = t_slots.apply(lambda x : feat13(x))
 
     print(varT.tail())
+
+    varT.to_sql('vart_{}'.format(time_resolution.lower()),db,if_exists='replace')
