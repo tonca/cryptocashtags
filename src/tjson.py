@@ -6,15 +6,19 @@ def n_flwrs(data):
 def n_frnds(data):
     return json.loads(data)['user']['friends_count']
 
+def is_retweet(data):
+    return 'retweeted_status' in json.loads(data)
+
 # Return the number of retweets of a retweet
 def n_retweets(data):
-    if is_retweeted(data):
+    if is_retweet(data):
         return int(json.loads(data)['retweeted_status']['retweet_count'])
     else:
         return 0
 
-def is_retweeted(data):
-    return 'retweeted_status' in json.loads(data)
+def tweet_symbols(data):
+    info = json.loads(data)
+    return info['entities']['symbols']
 
 def has_link(data):
     return len(json.loads(data)['entities']['urls'])>0
