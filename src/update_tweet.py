@@ -7,11 +7,11 @@ import sys
 import pandas as pd
 
 cred = json.load(open('authentication/credentials.json'))
-consumer_key = cred['consumer_key']
-consumer_secret = cred['consumer_secret']
+consumer_key = cred['twitter']['consumer_key']
+consumer_secret = cred['twitter']['consumer_secret']
 
-access_token = cred['access_token']
-access_token_secret = cred['access_token_secret']
+access_token = cred['twitter']['access_token']
+access_token_secret = cred['twitter']['access_token_secret']
 
 
 if __name__ == '__main__':

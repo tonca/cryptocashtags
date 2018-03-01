@@ -19,6 +19,15 @@ class DBListener(StreamListener):
         self.max_len = 0
         self.filter = filter
 
+        # create tweets table
+        sql_create_table = """CREATE TABLE IF NOT EXISTS 'tweets' (
+                                id BIGINT,
+                                date DATETIME,
+                                json JSON1,
+                                filter VARCHAR(10),
+                                PRIMARY KEY('id')
+                            );"""
+        self.c.execute(sql_create_table)
 
     def on_data(self, data):
         # Save data to the DB
