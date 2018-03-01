@@ -18,17 +18,17 @@ def feat3(group):
     return group.json.apply(lambda json : tjson.n_flwrs(json) > 5000).sum()
 # Volume of retweets
 def feat4(group):
-    return group.json.apply(lambda json : tjson.is_retweeted(json)).sum()
+    return group.json.apply(lambda json : tjson.is_retweet(json)).sum()
 # Volume of retweets retweeted more than 5 times
 def feat5(group):
     return group.json.apply(lambda json : tjson.n_retweets(json)>5).sum()
 # Volume of retweets authored by who has more than 1000 followers
 def feat6(group):
-    return group.json.apply(lambda json : tjson.is_retweeted(json) and tjson.n_flwrs(json) > 1000).sum()
+    return group.json.apply(lambda json : tjson.is_retweet(json) and tjson.n_flwrs(json) > 1000).sum()
 # Volume of retweets authored by who has more than 1000 followers
 # and less than 1000 followings
 def feat7(group):
-    return group.json.apply(lambda json : tjson.is_retweeted(json) and tjson.n_flwrs(json) > 1000 and tjson.n_frnds(json) < 1000).sum()
+    return group.json.apply(lambda json : tjson.is_retweet(json) and tjson.n_flwrs(json) > 1000 and tjson.n_frnds(json) < 1000).sum()
 # Volume of tweets containing links
 def feat8(group):
     return group.json.apply(lambda json : tjson.has_link(json)).sum()
