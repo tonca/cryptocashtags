@@ -1,71 +1,37 @@
-import json
 import sqlite3
 import pandas as pd
 import datetime as dt
 from afinn import Afinn
 import sys
+import tjson
 
-
-def n_flwrs(data):
-    return json.loads(data)['user']['followers_count']
-
-def n_frnds(data):
-    return json.loads(data)['user']['friends_count']
-
-# Return the number of retweets of a retweet
-def n_retweets(data):
-    if is_retweeted(data):
-        return int(json.loads(data)['retweeted_status']['retweet_count'])
-    else:
-        return 0
-
-def is_retweeted(data):
-    return 'retweeted_status' in json.loads(data)
-
-def has_link(data):
-    return len(json.loads(data)['entities']['urls'])>0
-
-def has_mntns(data):
-    return len(json.loads(data)['entities']['user_mentions'])>0
-
-def tweet_text(data):
-    info = json.loads(data)
-    if 'extended_tweet' in info:
-        text = info['extended_tweet']['full_text']
-    else:
-        text = info['text']
-    return text
 
 def sentiment_score(data):
-    return afinn.score(tweet_text(data))
-
-def is_multiple_cashtag(tweet):
-    info = json.loads(tweet)
-    return len(info['entities']['symbols'])>1
+    return afinn.score(tjson.tweet_text(data))
 
 # Volume of tweets authored by who has more than 1000 and
 # less than 5000 followers
 def feat2(group):
-    return group.json.apply(lambda json : n_flwrs(json) > 1000 and n_flwrs(json) < 5000).sum()
+    return group.json.apply(lambda json : tjson.n_flwrs(json) > 1000 and tjson.n_flwrs(json) < 5000).sum()
 # Volume of tweets authored by who has more than 5000 followers
 def feat3(group):
-    return group.json.apply(lambda json : n_flwrs(json) > 5000).sum()
+    return group.json.apply(lambda json : tjson.n_flwrs(json) > 5000).sum()
 # Volume of retweets
 def feat4(group):
-    return group.json.apply(lambda json : is_retweeted(json)).sum()
+    return group.json.apply(lambda json : tjson.is_retweeted(json)).sum()
 # Volume of retweets retweeted more than 5 times
 def feat5(group):
-    return group.json.apply(lambda json : n_retweets(json)>5).sum()
+    return group.json.apply(lambda json : tjson.n_retweets(json)>5).sum()
 # Volume of retweets authored by who has more than 1000 followers
 def feat6(group):
-    return group.json.apply(lambda json : is_retweeted(json) and n_flwrs(json) > 1000).sum()
+    return group.json.apply(lambda json : tjson.is_retweeted(json) and tjson.n_flwrs(json) > 1000).sum()
 # Volume of retweets authored by who has more than 1000 followers
 # and less than 1000 followings
 def feat7(group):
-    return group.json.apply(lambda json : is_retweeted(json) and n_flwrs(json) > 1000 and n_frnds(json) < 1000).sum()
+    return group.json.apply(lambda json : tjson.is_retweeted(json) and tjson.n_flwrs(json) > 1000 and tjson.n_frnds(json) < 1000).sum()
 # Volume of tweets containing links
 def feat8(group):
-    return group.json.apply(lambda json : has_link(json)).sum()
+    return group.json.apply(lambda json : tjson.has_link(json)).sum()
 # Volume of positive tweets
 def feat9(group):
     return group.json.apply(lambda json : sentiment_score(json)>0).sum()
@@ -77,10 +43,10 @@ def feat11(group):
     return group.json.apply(lambda json : sentiment_score(json)==0).sum()
 # Volume of positive tweet containing mentions (@)
 def feat12(group):
-    return group.json.apply(lambda json : sentiment_score(json)>0 and has_mntns(json)).sum()
+    return group.json.apply(lambda json : sentiment_score(json)>0 and tjson.has_mntns(json)).sum()
 # Volume of negative tweets containing mentions (@)
 def feat13(group):
-    return group.json.apply(lambda json : sentiment_score(json)==0 and has_mntns(json)).sum()
+    return group.json.apply(lambda json : sentiment_score(json)==0 and tjson.has_mntns(json)).sum()
 
 if __name__ == '__main__':
 
@@ -98,7 +64,7 @@ if __name__ == '__main__':
     tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
 
     # Remove tweets with multiple cashtags
-    tweets = tweets[tweets.json.apply(lambda x: not is_multiple_cashtag(x))]
+    tweets = tweets[tweets.json.apply(lambda x: not tjson.is_multiple_cashtag(x))]
   
     # Load the afinn class for sentiment analysis
     afinn = Afinn()
