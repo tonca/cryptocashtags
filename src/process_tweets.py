@@ -29,14 +29,19 @@ def has_mntns(data):
     return len(json.loads(data)['entities']['user_mentions'])>0
 
 def tweet_text(data):
-    if is_retweeted(data):
-        text = json.loads(data)['retweeted_status']['text']
+    info = json.loads(data)
+    if 'extended_tweet' in info:
+        text = info['extended_tweet']['full_text']
     else:
-        text = json.loads(data)['text']
+        text = info['text']
     return text
 
 def sentiment_score(data):
     return afinn.score(tweet_text(data))
+
+def is_multiple_cashtag(tweet):
+    info = json.loads(tweet)
+    return len(info['entities']['symbols'])>1
 
 # Volume of tweets authored by who has more than 1000 and
 # less than 5000 followers
@@ -92,6 +97,9 @@ if __name__ == '__main__':
     tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
     tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
 
+    # Remove tweets with multiple cashtags
+    tweets = tweets[tweets.json.apply(lambda x: not is_multiple_cashtag(x))]
+  
     # Load the afinn class for sentiment analysis
     afinn = Afinn()
 
