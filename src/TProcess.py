@@ -1,6 +1,6 @@
 import sqlite3
 import pandas as pd
-import datetime as dt
+from datetime import timedelta, datetime
 from afinn import Afinn
 import sys
 import tjson
@@ -53,41 +53,59 @@ if __name__ == '__main__':
     # Get the time resolution
     time_resolution = sys.argv[1]
 
+    td = timedelta(hours=1)
+
     # Fetch data from db
-    db = sqlite3.connect('tweets.db')
+    db = sqlite3.connect('data_collected/tweets-001.db')
     c = db.cursor()
-    c.execute("SELECT * FROM tweets")
+
+    c.execute("SELECT min(date), max(date) FROM tweets")
 
     rows = c.fetchall()
+    start = datetime.strptime(rows[0][0], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
+    end = datetime.strptime(rows[0][1], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)
 
-    tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
-    tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
+    for i in range(int((end-start)/td)):
 
-    # Remove tweets with multiple cashtags
-    tweets = tweets[tweets.json.apply(lambda x: not tjson.is_multiple_cashtag(x))]
-  
-    # Load the afinn class for sentiment analysis
-    afinn = Afinn()
+        slot_start = datetime.now()
+        print("Fetching data...")
+        c.execute("SELECT * FROM tweets WHERE date > '{}' AND date < '{}'".format(start+td*i,start+td*(i+1)))
 
-    # This lets us process tweet grouped in time slots
-    t_slots = tweets.groupby(pd.Grouper(freq=time_resolution, key='date'))
-    varT = pd.DataFrame()
+        rows = c.fetchall()
 
-    # Computing varT
-    varT['f1'] = t_slots.size()
-    varT['f2'] = t_slots.apply(lambda x : feat2(x))
-    varT['f3'] = t_slots.apply(lambda x : feat3(x))
-    varT['f4'] = t_slots.apply(lambda x : feat4(x))
-    varT['f5'] = t_slots.apply(lambda x : feat5(x))
-    varT['f6'] = t_slots.apply(lambda x : feat6(x))
-    varT['f7'] = t_slots.apply(lambda x : feat7(x))
-    varT['f8'] = t_slots.apply(lambda x : feat8(x))
-    varT['f9'] = t_slots.apply(lambda x : feat9(x))
-    varT['f10'] = t_slots.apply(lambda x : feat10(x))
-    varT['f11'] = t_slots.apply(lambda x : feat11(x))
-    varT['f12'] = t_slots.apply(lambda x : feat12(x))
-    varT['f13'] = t_slots.apply(lambda x : feat13(x))
+        tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
+        tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
 
-    print(varT.tail())
+        print("fetching time: "+str(datetime.now() - slot_start) )
+        print("Processing data...")
 
-    varT.to_sql('vart_{}'.format(time_resolution.lower()),db,if_exists='replace')
+        # Remove tweets with multiple cashtags
+        tweets = tweets[tweets.json.apply(lambda x: not tjson.is_multiple_cashtag(x))]
+
+        # Load the afinn class for sentiment analysis
+        afinn = Afinn()
+
+        varT = {}
+        # Computing varT
+        varT['f1'] = tweets.shape[0]
+        varT['f2'] = feat2(tweets)
+        varT['f3'] = feat3(tweets)
+        varT['f4'] = feat4(tweets)
+        varT['f5'] = feat5(tweets)
+        varT['f6'] = feat6(tweets)
+        varT['f7'] = feat7(tweets)
+        varT['f8'] = feat8(tweets)
+        varT['f9'] = feat9(tweets)
+        varT['f10'] = feat10(tweets)
+        varT['f11'] = feat11(tweets)
+        varT['f12'] = feat12(tweets)
+        varT['f13'] = feat13(tweets)
+
+        print("processing time: "+str(datetime.now() - slot_start) )
+
+        varT = pd.DataFrame(varT,index=[str(start+td*i)])
+        print(varT.tail())
+        varT.index = pd.to_datetime(varT.index)
+        varT.to_sql('vart_{}'.format(time_resolution.lower()),db,index=True,if_exists='append')
+
+        print("slot time elapsed: "+str(datetime.now() - slot_start) )
