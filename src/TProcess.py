@@ -48,10 +48,11 @@ def feat12(group):
 def feat13(group):
     return group.json.apply(lambda json : sentiment_score(json)==0 and tjson.has_mntns(json)).sum()
 
+
 if __name__ == '__main__':
 
     # Get the time resolution
-    time_resolution = sys.argv[1]
+    time_resolution = '1h'
     cashtags = ['btc','eth']
 
     td = timedelta(hours=1)
@@ -60,11 +61,39 @@ if __name__ == '__main__':
     db = sqlite3.connect('data_collected/tweets-001.db')
     c = db.cursor()
 
-    c.execute("SELECT min(date), max(date) FROM tweets")
+    sql_create_vart = '''
+        CREATE TABLE IF NOT EXISTS "vart_1h" (
+        "f1" INTEGER,
+        "f10" INTEGER,
+        "f11" INTEGER,
+        "f12" INTEGER,
+        "f13" INTEGER,
+        "f2" INTEGER,
+        "f3" INTEGER,
+        "f4" INTEGER,
+        "f5" INTEGER,
+        "f6" INTEGER,
+        "f7" INTEGER,
+        "f8" INTEGER,
+        "f9" INTEGER,
+        "tag" TEXT,
+        "date" TIMESTAMP,
+        PRIMARY KEY("date","tag"))
+        '''
 
+    c.execute(sql_create_vart)
+
+    c.execute("SELECT min(date), max(date) FROM tweets")
     rows = c.fetchall()
     start = datetime.strptime(rows[0][0], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
     end = datetime.strptime(rows[0][1], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)
+
+    # start from the last insertion
+    c.execute("SELECT max(date) FROM vart_{}".format(time_resolution))
+    last_entry = c.fetchall()[0][0]
+    if not last_entry == None:
+        start = datetime.strptime(last_entry, '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
+
 
     for i in range(int((end-start)/td)):
         print('TIME SLOT: {} '.format(start+td*i))
@@ -110,12 +139,13 @@ if __name__ == '__main__':
             varT['f12'] = feat12(tweets)
             varT['f13'] = feat13(tweets)
 
+            varT['date'] = pd.to_datetime(str(start+td*i))
+
             print("processing time: " + str(datetime.now() - slot_start) )
 
-            varT = pd.DataFrame(varT,index=[str(start+td*i)])
+            varT = pd.DataFrame(varT, index=[i])
             print(varT.tail())
-            varT.index = pd.to_datetime(varT.index)
-            varT.to_sql('vart_{}'.format(time_resolution.lower()),db,index=True,if_exists='append')
+            varT.to_sql('vart_{}'.format(time_resolution.lower()),db,index=False,if_exists='append')
 
             print("slot time elapsed: "+str(datetime.now() - slot_start) )
 
