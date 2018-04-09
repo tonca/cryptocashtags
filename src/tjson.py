@@ -39,7 +39,11 @@ def tweet_text(data):
 # Are there more than one cashtag in the status
 def is_multiple_cashtag(tweet):
     info = json.loads(tweet)
-    return len(info['entities']['symbols'])>1
+    return not len(info['entities']['symbols'])==1
+
+def get_cashtag(tweet):
+    info = json.loads(tweet)
+    return info['entities']['symbols'][0]['text'].lower()
 
 # The JSON string describing the symbols in a status text ()
 def tweet_symbols(data):
