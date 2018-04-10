@@ -57,12 +57,17 @@ if __name__ == '__main__':
 
     td = timedelta(hours=1)
 
-    # Fetch data from db
-    db = sqlite3.connect('data_collected/tweets-001.db')
-    c = db.cursor()
+    # Fetch tweets from db
+    db_tweets = sqlite3.connect('data_collected/tweets-001.db')
+    c_tweets = db_tweets.cursor()
+
+    db_vart = sqlite3.connect('vart.db')
+    c_vart = db_vart.cursor()
 
     sql_create_vart = '''
         CREATE TABLE IF NOT EXISTS "vart_1h" (
+        "tag" TEXT,
+        "date" TIMESTAMP,
         "f1" INTEGER,
         "f10" INTEGER,
         "f11" INTEGER,
@@ -76,43 +81,52 @@ if __name__ == '__main__':
         "f7" INTEGER,
         "f8" INTEGER,
         "f9" INTEGER,
-        "tag" TEXT,
-        "date" TIMESTAMP,
         PRIMARY KEY("date","tag"))
         '''
 
-    c.execute(sql_create_vart)
+    c_vart.execute(sql_create_vart)
 
-    c.execute("SELECT min(date), max(date) FROM tweets")
-    rows = c.fetchall()
+    # Subdivide time into slots
+    c_tweets.execute("SELECT min(date), max(date) FROM tweets")
+    rows = c_tweets.fetchall()
     start = datetime.strptime(rows[0][0], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
     end = datetime.strptime(rows[0][1], '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)
 
     # start from the last insertion
-    c.execute("SELECT max(date) FROM vart_{}".format(time_resolution))
-    last_entry = c.fetchall()[0][0]
+    c_vart.execute("SELECT max(date) FROM vart_{}".format(time_resolution))
+    last_entry = c_vart.fetchall()[0][0]
+   
     if not last_entry == None:
-        start = datetime.strptime(last_entry, '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
+        last_entry_tm = datetime.strptime(last_entry, '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
+
+        if last_entry_tm > start and last_entry_tm < end:
+            start = last_entry_tm
 
 
     for i in range(int((end-start)/td)):
         print('TIME SLOT: {} '.format(start+td*i))
+        slot_start = datetime.now()
+
+        varT_tags = []
+
         for tag in cashtags:
 
             print('TAG: {}'.format(tag))
 
-            slot_start = datetime.now()
+            fetch_start = datetime.now()
             print("Fetching data...")
-            c.execute("SELECT * FROM tweets WHERE date > '{}' AND date < '{}'".format(start+td*i,start+td*(i+1)))
+            c_tweets.execute("SELECT * FROM tweets WHERE date > '{}' AND date < '{}'".format(start+td*i,start+td*(i+1)))
 
-            rows = c.fetchall()
+            rows = c_tweets.fetchall()
 
             tweets = pd.DataFrame(columns=['id', 'date', 'json', 'filter'], data=rows)
             tweets['date'] = pd.to_datetime(tweets['date'],format='%Y-%m-%d %H:%M:%S')
 
-            print("fetching time: "+str(datetime.now() - slot_start) )
+            print("fetching time: "+str(datetime.now() - fetch_start) )
+
             print("Processing data...")
 
+            proc_start = datetime.now()
             # Remove tweets with multiple cashtags
             tweets = tweets[tweets.json.apply(lambda x: not tjson.is_multiple_cashtag(x))]
             # Select a specific cashtag
@@ -121,33 +135,37 @@ if __name__ == '__main__':
             # Load the afinn class for sentiment analysis
             afinn = Afinn()
 
-            varT = {}
-            varT['tag'] = tag
+            varT_dict = {}
+            varT_dict['tag'] = tag
             # Computing varT
-            varT['f1'] = tweets.shape[0]
-            varT['f2'] = feat2(tweets)
-            varT['f3'] = feat3(tweets)
-            varT['f4'] = feat4(tweets)
-            varT['f5'] = feat5(tweets)
-            varT['f6'] = feat6(tweets)
-            varT['f7'] = feat7(tweets)
-            varT['f8'] = feat8(tweets)
+            varT_dict['f1'] = tweets.shape[0]
+            varT_dict['f2'] = feat2(tweets)
+            varT_dict['f3'] = feat3(tweets)
+            varT_dict['f4'] = feat4(tweets)
+            varT_dict['f5'] = feat5(tweets)
+            varT_dict['f6'] = feat6(tweets)
+            varT_dict['f7'] = feat7(tweets)
+            varT_dict['f8'] = feat8(tweets)
             # Sentiment analysis
-            varT['f9'] = feat9(tweets)
-            varT['f10'] = feat10(tweets)
-            varT['f11'] = feat11(tweets)
-            varT['f12'] = feat12(tweets)
-            varT['f13'] = feat13(tweets)
+            varT_dict['f9'] = feat9(tweets)
+            varT_dict['f10'] = feat10(tweets)
+            varT_dict['f11'] = feat11(tweets)
+            varT_dict['f12'] = feat12(tweets)
+            varT_dict['f13'] = feat13(tweets)
 
-            varT['date'] = pd.to_datetime(str(start+td*i))
+            varT_dict['date'] = pd.to_datetime(str(start+td*i))
 
-            print("processing time: " + str(datetime.now() - slot_start) )
+            print("processing time: " + str(datetime.now() - proc_start) )
 
-            varT = pd.DataFrame(varT, index=[i])
-            print(varT.tail())
-            varT.to_sql('vart_{}'.format(time_resolution.lower()),db,index=False,if_exists='append')
+            varT_tags.append(varT_dict)
+        
 
-            print("slot time elapsed: "+str(datetime.now() - slot_start) )
+        varT = pd.DataFrame(varT_tags, index=range(len(cashtags)))
+        print(varT.tail())
+        varT.to_sql('vart_{}'.format(time_resolution.lower()),db_vart,index=False,if_exists='append')
+
+        print("slot time elapsed: "+str(datetime.now() - slot_start) )
 
 
-    db.close()
+    db_tweets.close()
+    db_vart.close()
