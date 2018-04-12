@@ -55,7 +55,8 @@ if __name__ == '__main__':
 
     # Get the time resolution
     time_resolution = '1h'
-    cashtags = ['btc','eth','ltc'] # $btc,#btc,#bitcoin,$eth,#eth,#ethereum,$ltc,#ltc,#litecoin
+    cashtags = [['btc','bitcoin'],['eth','ethereum'],['ltc','litecoin']] # $btc,#btc,#bitcoin,$eth,#eth,#ethereum,$ltc,#ltc,#litecoin
+    all_tags = ['btc','bitcoin','eth','ethereum','ltc','litecoin']
 
     td = timedelta(hours=1)
 
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     db_files = [f for f in listdir(db_path) if isfile(join(db_path, f))]
 
     for db_file in db_files:
-
+        print("===================")
         print('DB file: '+db_file)
         # Fetch tweets from db
         db_tweets = sqlite3.connect(join(db_path, db_file))
@@ -118,8 +119,8 @@ if __name__ == '__main__':
 
 
         if start < end:
-
             for i in range(int((end-start)/td)):
+                print('==============================')
                 print('TIME SLOT: {} '.format(start+td*i))
                 slot_start = datetime.now()
 
@@ -138,9 +139,10 @@ if __name__ == '__main__':
 
                 print("fetching time: "+str(datetime.now() - fetch_start) )
 
-                for tag in cashtags:
+                for tags in cashtags:
 
-                    print('TAG: {}'.format(tag))
+                    print('--------------------')
+                    print('TAG: {}'.format(tags))
 
 
                     print("Filtering data...")
@@ -148,7 +150,7 @@ if __name__ == '__main__':
                     filt_start = datetime.now()
                     
                     # Select a specific cashtag
-                    tweets_tag = tweets[tweets.json.apply(lambda x: tjson.is_about_tag_ex(x,tag,cashtags)) ]
+                    tweets_tag = tweets[tweets.json.apply(lambda x: tjson.is_about_tags_ex(x,tags,all_tags)) ]
                     print("filtering time: " + str(datetime.now() - filt_start) )
 
                     print("Processing data...")
@@ -157,7 +159,7 @@ if __name__ == '__main__':
                     afinn = Afinn()
 
                     varT_dict = {}
-                    varT_dict['tag'] = tag
+                    varT_dict['tag'] = tags[0]
                     # Computing varT
                     varT_dict['f1'] = tweets_tag.shape[0]
                     varT_dict['f2'] = feat2(tweets_tag)

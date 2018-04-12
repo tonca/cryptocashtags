@@ -57,15 +57,15 @@ def tweet_hashtags(data):
     return [item['text'].lower() for item in info['entities']['hashtags']]
 
 # Whether a tag is present in the symbols or hashtags of a tweet
-def is_about_tag(tweet,tag):
+def is_about_tags(tweet,tags):
 
     symbols = tweet_symbols(tweet)
     hashtags = tweet_hashtags(tweet)
 
-    return tag in symbols or tag in hashtags 
+    return any([tag in symbols or tag in hashtags for tag in tags])
 
 # Whether a tag is present and the other aren't
-def is_about_tag_ex(tweet,tag,all):
+def is_about_tags_ex(tweet,tags,all):
 
     # Taking advantage of the lazy evaluation
-    return is_about_tag(tweet,tag) and not any([is_about_tag(tweet,item) for item in all if item != tag])
+    return is_about_tags(tweet,tags) and not any([is_about_tags(tweet,item) for item in all if not item in tags])
