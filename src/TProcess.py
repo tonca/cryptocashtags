@@ -140,7 +140,7 @@ if __name__ == '__main__':
                 print("fetching time: "+str(datetime.now() - fetch_start) )
 
                 if tweets.empty:
-                    print("Dataframe is empty!")
+                    print("Slot is empty!")
                     continue
 
                 for tags in cashtags:
