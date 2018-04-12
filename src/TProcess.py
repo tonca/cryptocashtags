@@ -112,7 +112,7 @@ if __name__ == '__main__':
     
         if not last_entry == None:
             last_entry_tm = datetime.strptime(last_entry, '%Y-%m-%d %H:%M:%S').replace(second=0,minute=0)+td
-            print("Last entry: {}".format(last_entry_tm))
+            print("Last entry: {}".format(last_entry_tm-td))
             if last_entry_tm > start and last_entry_tm <= end:
                 start = last_entry_tm
 
@@ -138,6 +138,10 @@ if __name__ == '__main__':
 
 
                 print("fetching time: "+str(datetime.now() - fetch_start) )
+
+                if tweets.empty:
+                    print("Dataframe is empty!")
+                    continue
 
                 for tags in cashtags:
 
